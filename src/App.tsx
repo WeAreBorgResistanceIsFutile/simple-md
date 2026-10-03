@@ -1315,6 +1315,82 @@ function App() {
     }
   }
 
+  // Closes several tabs at once. Asks once if any of them has unsaved changes.
+  async function closeDocuments(ids: Set<string>, preferActiveId?: string) {
+    const targets = documents.filter((document) => ids.has(document.id))
+
+    if (targets.length === 0) {
+      return
+    }
+
+    const dirty = targets.filter((document) => document.isDirty)
+
+    if (dirty.length > 0) {
+      const shouldClose = await dialog.confirm({
+        title: `Close ${targets.length} ${targets.length === 1 ? 'tab' : 'tabs'}?`,
+        message: `${dirty.map((document) => document.title).join(', ')} ${
+          dirty.length === 1 ? 'has' : 'have'
+        } unsaved changes that will be lost.`,
+        okLabel: 'Discard',
+        destructive: true,
+      })
+
+      if (!shouldClose) {
+        return
+      }
+    }
+
+    const remaining = documents.filter((document) => !ids.has(document.id))
+    const nextDocuments = remaining.length > 0 ? remaining : [createWelcomeDocument()]
+
+    setDocuments(nextDocuments)
+
+    if (!nextDocuments.some((document) => document.id === activeDocumentId)) {
+      const preferred = nextDocuments.find((document) => document.id === preferActiveId)
+      setActiveDocumentId((preferred ?? nextDocuments[0]).id)
+    }
+  }
+
+  // "Close others" keeps pinned tabs, like most tabbed editors.
+  function handleCloseOtherDocuments(documentId: string) {
+    const ids = new Set(
+      documents
+        .filter((document) => document.id !== documentId && !document.isPinned)
+        .map((document) => document.id),
+    )
+    void closeDocuments(ids, documentId)
+  }
+
+  function handleCloseAllDocuments() {
+    void closeDocuments(new Set(documents.map((document) => document.id)))
+  }
+
+  function handleCloseUnpinnedDocuments() {
+    void closeDocuments(
+      new Set(documents.filter((document) => !document.isPinned).map((document) => document.id)),
+    )
+  }
+
+  function handleClosePinnedDocuments() {
+    void closeDocuments(
+      new Set(documents.filter((document) => document.isPinned).map((document) => document.id)),
+    )
+  }
+
+  // Pinned tabs always sit at the left, in their existing relative order.
+  function handleTogglePinDocument(documentId: string) {
+    setDocuments((current) => {
+      const toggled = current.map((document) =>
+        document.id === documentId ? { ...document, isPinned: !document.isPinned } : document,
+      )
+
+      return [
+        ...toggled.filter((document) => document.isPinned),
+        ...toggled.filter((document) => !document.isPinned),
+      ]
+    })
+  }
+
   function handleCreateScratchpad() {
     const scratchpad: OpenDocument = {
       id: `scratch-${Date.now()}`,
@@ -1430,6 +1506,11 @@ function App() {
           activeDocumentId={activeDocumentId}
           onActivate={setActiveDocumentId}
           onClose={(documentId) => void handleCloseDocument(documentId)}
+          onCloseOthers={handleCloseOtherDocuments}
+          onCloseAll={handleCloseAllDocuments}
+          onCloseUnpinned={handleCloseUnpinnedDocuments}
+          onClosePinned={handleClosePinnedDocuments}
+          onTogglePin={handleTogglePinDocument}
           onRename={(documentId, nextName) => void handleRenameDocumentTab(documentId, nextName)}
           onOpenDroppedFiles={(paths) => void handleOpenDroppedMarkdownFiles(paths)}
           onNew={handleCreateScratchpad}
