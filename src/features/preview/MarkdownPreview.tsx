@@ -7,6 +7,7 @@ import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import type { Root, Element, Text, RootContent } from 'hast'
 import { InlineChart } from '../charts/InlineChart'
+import { MermaidDiagram } from '../mermaid/MermaidDiagram'
 import { openPathExternally } from '../../lib/desktop'
 import { resolveDocumentUrl } from '../../lib/document'
 
@@ -148,6 +149,10 @@ export function MarkdownPreview({
                   return <InlineChart rawSpec={rawSpec} staticRender={staticCharts} />
                 }
 
+                if (language === 'mermaid') {
+                  return <MermaidDiagram source={rawSpec} staticRender={staticCharts} />
+                }
+
                 return (
                   <code className={className} {...rest}>
                     {children}
@@ -187,7 +192,8 @@ export function MarkdownPreview({
                 if (
                   firstChild?.type === 'element' &&
                   firstChild.tagName === 'code' &&
-                  normalizedClassName.includes('language-chart')
+                  (normalizedClassName.includes('language-chart') ||
+                    normalizedClassName.includes('language-mermaid'))
                 ) {
                   return <>{props.children}</>
                 }

@@ -645,7 +645,7 @@ function App() {
       }))
       setLastMessage(`Opened ${payload.name}.`)
     } catch (error) {
-      setLastMessage(getErrorMessage(error, 'Unable to open that markdown file.'))
+      setLastMessage(getErrorMessage(error, 'Unable to open that file.'))
     } finally {
       setIsBusy(false)
     }
@@ -1276,7 +1276,8 @@ function App() {
   }
 
   async function handleOpenRecentPath(path: string) {
-    if (isMarkdownPath(path)) {
+    // Files can be any type now, so route on the recents list, not the extension.
+    if (isMarkdownPath(path) || recents.files.includes(path)) {
       await handleOpenDocument(path)
       return
     }
