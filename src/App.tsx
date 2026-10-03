@@ -155,6 +155,12 @@ function saveRecents(recents: RecentsState) {
   window.localStorage.setItem(RECENTS_KEY, JSON.stringify(recents))
 }
 
+// Opening a file is async, so the "already open?" check can be stale by the time
+// the document is added; never allow two tabs with the same id (React keys).
+function appendDocument(current: OpenDocument[], next: OpenDocument) {
+  return current.some((document) => document.id === next.id) ? current : [...current, next]
+}
+
 function pushRecent(items: string[], value: string) {
   return [value, ...items.filter((item) => item !== value)].slice(0, 8)
 }
@@ -635,7 +641,7 @@ function App() {
       }
 
       startTransition(() => {
-        setDocuments((current) => [...current, nextDocument])
+        setDocuments((current) => appendDocument(current, nextDocument))
         setActiveDocumentId(nextDocument.id)
       })
 
@@ -969,7 +975,7 @@ function App() {
       }
 
       startTransition(() => {
-        setDocuments((current) => [...current, nextDocument])
+        setDocuments((current) => appendDocument(current, nextDocument))
         setActiveDocumentId(nextDocument.id)
       })
       setSelectedTreePath(created.path)
@@ -1257,7 +1263,7 @@ function App() {
       }
 
       startTransition(() => {
-        setDocuments((current) => [...current, nextDocument])
+        setDocuments((current) => appendDocument(current, nextDocument))
         setActiveDocumentId(nextDocument.id)
       })
 
