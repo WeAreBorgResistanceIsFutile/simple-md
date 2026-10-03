@@ -158,17 +158,20 @@ export function openMermaidViewer(svgMarkup: string) {
   requestAnimationFrame(fit)
 }
 
-// Wrapper used by the Hybrid editor preview: the diagram plus a hover
-// "expand" button; double-click also opens the viewer.
+// Markup for the Hybrid editor preview: the diagram plus a hover "expand"
+// button. Crepe re-sanitizes preview markup (dropping listeners), so the viewer
+// is opened by delegated listeners on the editor host (see HybridEditor).
 export function createMermaidElement(svgMarkup: string) {
   const wrap = document.createElement('div')
   wrap.className = 'mermaid-diagram'
   const body = document.createElement('div')
   body.className = 'mermaid-diagram__body'
   body.innerHTML = svgMarkup
-  const expand = button('⛶', 'Open full screen', () => openMermaidViewer(svgMarkup))
-  expand.classList.add('mermaid-diagram__expand')
+  const expand = document.createElement('button')
+  expand.type = 'button'
+  expand.className = 'mermaid-viewer__btn mermaid-diagram__expand'
+  expand.title = 'Open full screen'
+  expand.textContent = '⛶'
   wrap.append(body, expand)
-  wrap.addEventListener('dblclick', () => openMermaidViewer(svgMarkup))
   return wrap
 }

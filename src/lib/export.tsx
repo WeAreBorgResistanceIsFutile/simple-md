@@ -19,17 +19,22 @@ export async function createExportHtml({ title, content, baseUrl }: ExportHtmlOp
     root.render(<MarkdownPreview content={content} baseUrl={baseUrl} staticCharts />)
   })
 
-  // Mermaid diagrams render asynchronously; wait (bounded) until they settle.
-  const deadline = Date.now() + 15_000
-  while (container.querySelector('[data-mermaid-pending]') && Date.now() < deadline) {
-    await new Promise((resolve) => setTimeout(resolve, 50))
+  try {
+    // Mermaid diagrams render asynchronously; wait (bounded) until they settle.
+    const deadline = Date.now() + 15_000
+    while (container.querySelector('[data-mermaid-pending]') && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 50))
+    }
+
+    if (container.querySelector('[data-mermaid-pending]')) {
+      throw new Error('A Mermaid diagram did not finish rendering in time, so nothing was exported.')
+    }
+
+    return buildExportHtml(title, container.innerHTML)
+  } finally {
+    root.unmount()
+    document.body.removeChild(container)
   }
-
-  const previewMarkup = container.innerHTML
-  root.unmount()
-  document.body.removeChild(container)
-
-  return buildExportHtml(title, previewMarkup)
 }
 
 export function printDocument(html: string): void {

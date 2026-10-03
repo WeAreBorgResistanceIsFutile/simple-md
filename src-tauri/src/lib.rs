@@ -113,7 +113,12 @@ fn open_document(path: String) -> Result<DocumentPayload, String> {
         .map_err(error_to_string)?
         .len();
     if size > MAX_OPEN_BYTES {
-        return Err(format!("{} is too large to open ({} MB).", file_name(&target), size / 1_048_576));
+        return Err(format!(
+            "{} is too large to open ({:.1} MB; the limit is {} MB).",
+            file_name(&target),
+            size as f64 / 1_048_576.0,
+            MAX_OPEN_BYTES / 1_048_576
+        ));
     }
     let content = fs::read_to_string(&target)
         .with_context(|| format!("Failed to read {} (not a UTF-8 text file?)", path))

@@ -142,7 +142,7 @@ export function MarkdownPreview({
             components={{
               code(props) {
                 const { className, children, ...rest } = props
-                const language = /language-(\w+)/.exec(className ?? '')?.[1]
+                const language = /language-(\w+)/.exec(className ?? '')?.[1]?.toLowerCase()
                 const rawSpec = String(children).replace(/\n$/, '')
 
                 if (language === 'chart') {
@@ -185,9 +185,9 @@ export function MarkdownPreview({
               pre(props: MarkdownPreProps) {
                 const firstChild = props.node?.children?.[0]
                 const className = firstChild?.properties?.className
-                const normalizedClassName = Array.isArray(className)
-                  ? className.join(' ')
-                  : className ?? ''
+                const normalizedClassName = (
+                  Array.isArray(className) ? className.join(' ') : className ?? ''
+                ).toLowerCase()
 
                 if (
                   firstChild?.type === 'element' &&
